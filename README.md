@@ -1,39 +1,110 @@
 # Student Management System
 
-A Full Stack Web Application built for the **Full Stack Technologies (FST) Mini Project Assessment**. The application provides an interface to manage student enrollment records with complete Create, Read, Update, and Delete (CRUD) capabilities, backed by a Node.js REST API and MongoDB database.
+> **Portfolio-Driven Assessment &bull; Full Stack Technologies (FST)**  
+> **Course Assessment:** Mini Full Stack Web Application  
+> **Submission Date:** October 1, 2026  
+> **Repository:** [https://github.com/prathamreet/fst-aat](https://github.com/prathamreet/fst-aat)
 
 ---
 
-## Key Features
+## Executive Summary
 
-- **Full CRUD Operations**:
-  - **Create**: Register new students with validation (Roll No, Name, Email, Department, Semester).
-  - **Read**: View all registered students in a clean, responsive directory table.
-  - **Update**: Edit existing student details via a dedicated modal dialog.
-  - **Delete**: Remove student records with confirmation to prevent accidental loss.
-- **Search & Filtering**:
-  - Live debounced search across student names, roll numbers, and emails.
-  - Filter directory by Department / Course.
-  - Filter directory by Enrollment Status (*Active*, *Inactive*, *Graduated*).
-- **Dashboard Counters**:
-  - Real-time statistics showing Total Students, Active Enrolled, and Departments.
-- **Human-Centric, Lightweight UI**:
-  - Built with semantic HTML5, modern Vanilla CSS, and pure JavaScript (`fetch` API).
-  - Zero heavy frontend build chains or framework overhead.
-- **Dual Deployment Architecture**:
-  - Standard Express server for local development and traditional platforms (Render, Railway, VPS).
-  - Pre-configured for **Netlify** using Netlify Serverless Functions (`serverless-http`) and redirects.
+The **Student Management System** is a complete, production-grade full stack web application developed as part of the Portfolio-Driven Assessment for the Full Stack Technologies curriculum. 
+
+The application implements a centralized student directory to manage academic records, handle enrollments, and track departmental status. Built without frontend framework bloat, it directly demonstrates core full stack concepts: asynchronous client-server communication, modular RESTful API architecture, structured document-based database modeling with Mongoose, and serverless cloud deployment.
 
 ---
 
-## Tech Stack
+## Technology Stack
 
-| Component | Technology | Description |
+The project adheres strictly to the technologies prescribed in the assessment guidelines:
+
+| Layer | Technology | Role & Implementation |
 |---|---|---|
-| **Frontend** | HTML5, CSS3, JavaScript (ES6+) | Clean responsive layout, Fetch API, Modal UX |
-| **Backend** | Node.js, Express.js | Modular RESTful API |
-| **Database** | MongoDB & Mongoose | Document database with schema validation |
-| **Deployment** | Netlify / Render / Local Node | Serverless functions & static assets |
+| **Frontend** | HTML5, CSS3, JavaScript (ES6+) | Semantic layout, custom design system, DOM manipulation, asynchronous Fetch API |
+| **Backend** | Node.js, Express.js | Modular REST API, route handlers, error middleware, CORS handling |
+| **Database** | MongoDB (Atlas), Mongoose ODM | Cloud document storage, strict schema validation, unique indexes, connection caching |
+| **API Architecture** | RESTful HTTP API | Standardized JSON request/response payloads with HTTP status codes |
+| **Version Control** | Git & GitHub | Feature branching, semantic commit history |
+| **Deployment** | Netlify (Serverless) & Node.js | Dual-mode execution (local Express server + Netlify serverless functions via `serverless-http`) |
+
+---
+
+## System Architecture
+
+```text
+[ Browser / Client ]
+      │
+      │  HTTP Requests (JSON via Fetch API)
+      ▼
+[ Express REST API / Netlify Serverless Function ]
+      │  ├── CORS & JSON Body Parsing
+      │  ├── Input Validation & Duplicate Checks
+      │  └── Route Controllers (/api/students)
+      ▼
+[ Mongoose ODM Layer ]
+      │  ├── Student Schema & Validation Rules
+      │  └── Connection Pool Caching
+      ▼
+[ MongoDB Atlas (Cloud NoSQL Database) ]
+```
+
+---
+
+## Implementation of CRUD Operations
+
+The core assessment requirement is end-to-end connectivity covering all four CRUD operations:
+
+1. **Create (`POST /api/students`)**:
+   - Client submits student information via an interactive modal form.
+   - Backend validates required fields (Name, Roll No, Email, Course, Semester) and enforces unique roll numbers.
+   - Record is persisted into MongoDB and returns HTTP `201 Created`.
+
+2. **Read (`GET /api/students` & `GET /api/students/stats`)**:
+   - Dynamic directory listing sorted chronologically (newest first).
+   - Real-time debounced search by student name, roll number, or email.
+   - Filterable by academic department and enrollment status (*Active*, *Inactive*, *Graduated*).
+   - Aggregate statistics endpoint powers live KPI dashboard cards.
+
+3. **Update (`PUT /api/students/:id`)**:
+   - Pre-fills modal dialogue with existing student metadata.
+   - Validates uniqueness constraint if roll number is modified.
+   - Atomic update via `findByIdAndUpdate` with schema validators active.
+
+4. **Delete (`DELETE /api/students/:id`)**:
+   - Protected with a two-step confirmation dialogue to prevent accidental deletion.
+   - Permanently deletes document from the MongoDB collection and returns immediate UI feedback.
+
+---
+
+## Data Model (Mongoose Schema)
+
+```javascript
+{
+  name:      { type: String, required: true, trim: true },
+  rollNo:    { type: String, required: true, unique: true, uppercase: true },
+  email:     { type: String, required: true, lowercase: true, trim: true },
+  course:    { type: String, required: true },
+  semester:  { type: String, required: true, default: 'Semester 1' },
+  phone:     { type: String, default: '' },
+  status:    { type: String, enum: ['Active', 'Inactive', 'Graduated'], default: 'Active' },
+  timestamps: true // createdAt, updatedAt
+}
+```
+
+---
+
+## REST API Specification
+
+| Method | Endpoint | Description | Status Codes |
+|---|---|---|---|
+| `GET` | `/api/students` | Retrieve all student records (supports `search`, `course`, `status` query params) | `200`, `500` |
+| `GET` | `/api/students/stats` | Retrieve aggregate metrics (total, active, departments) | `200`, `500` |
+| `GET` | `/api/students/:id` | Retrieve single student by MongoDB ID | `200`, `404`, `500` |
+| `POST` | `/api/students` | Register a new student record | `201`, `400`, `500` |
+| `PUT` | `/api/students/:id` | Update an existing student record | `200`, `400`, `404`, `500` |
+| `DELETE` | `/api/students/:id` | Remove a student record | `200`, `404`, `500` |
+| `GET` | `/api/health` | Health-check endpoint reporting server uptime & DB connection status | `200` |
 
 ---
 
@@ -42,126 +113,115 @@ A Full Stack Web Application built for the **Full Stack Technologies (FST) Mini 
 ```text
 fst-aat/
 ├── config/
-│   └── db.js                 # MongoDB connection handler
+│   └── db.js                 # MongoDB connection logic with connection caching & DNS fallback
 ├── doc/
-│   └── teacher-task.md       # Assessment requirements
+│   └── teacher-task.md       # Assessment guidelines and submission criteria
 ├── models/
-│   └── Student.js            # Mongoose schema and model
+│   └── Student.js            # Mongoose Schema definition and model exports
 ├── netlify/
 │   └── functions/
-│       └── api.js            # Netlify Serverless function handler
-├── public/                   # Static Frontend files
+│       └── api.js            # Netlify Serverless HTTP function wrapper
+├── public/                   # Frontend assets (Static client)
 │   ├── css/
-│   │   └── style.css         # Styling and design system
+│   │   └── style.css         # Clean, authentic UI styling (Inter font, responsive grid)
 │   ├── js/
-│   │   └── app.js           # Client-side CRUD and UI logic
+│   │   └── app.js           # Client controller (Fetch API, DOM events, modal state, toast alerts)
 │   └── index.html            # Main dashboard interface
 ├── routes/
-│   └── studentRoutes.js      # REST API route handlers
-├── .env.example              # Sample environment variables
-├── .gitignore                # Git ignore rules
-├── netlify.toml              # Netlify build and redirect configuration
-├── package.json              # Project dependencies and npm scripts
-├── README.md                 # Project documentation
-├── seed.js                   # Script to populate sample data
-└── server.js                 # Express application entry point
+│   └── studentRoutes.js      # REST API route handlers and business logic
+├── .env                      # Local environment configuration (git-ignored)
+├── .env.example              # Template configuration for deployment reference
+├── .gitignore                # Rules to prevent committing node_modules, keys, or build artifacts
+├── netlify.toml              # Netlify build configuration & API rewrite redirects
+├── package.json              # Project metadata, dependencies, and execution scripts
+├── seed.js                   # Automated database seeder with sample academic records
+├── server.js                 # Express server entry point for local and traditional hosting
+└── README.md                 # Complete project documentation and submission report
 ```
 
 ---
 
-## REST API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/students` | Get all students (supports `?search=`, `?course=`, `?status=`) |
-| `GET` | `/api/students/stats` | Get aggregate counts (total, active, courses) |
-| `GET` | `/api/students/:id` | Get details of a single student by ID |
-| `POST` | `/api/students` | Register a new student |
-| `PUT` | `/api/students/:id` | Update an existing student record |
-| `DELETE` | `/api/students/:id` | Delete a student record |
-| `GET` | `/api/health` | Health check and database status |
-
----
-
-## Getting Started Locally
+## Local Setup & Installation
 
 ### 1. Prerequisites
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [MongoDB](https://www.mongodb.com/) (either running locally or a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster)
+- **Node.js** (v18 or higher recommended)
+- **Git**
+- **MongoDB** (Local instance or free MongoDB Atlas cluster)
 
-### 2. Clone and Install Dependencies
+### 2. Clone the Repository
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/prathamreet/fst-aat.git
 cd fst-aat
+```
+
+### 3. Install Dependencies
+```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-Open `.env` and set your MongoDB connection string:
+### 4. Configure Environment Variables
+Create a `.env` file in the root directory (refer to `.env.example`):
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxxx.mongodb.net/student_db?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.l0azrdn.mongodb.net/student_db?retryWrites=true&w=majority
 ```
-*(If using local MongoDB, use `mongodb://127.0.0.1:27017/student_db`)*
 
-### 4. (Optional) Populate Sample Data
-To test the application immediately with realistic sample records:
+### 5. Seed Initial Data (Optional)
+To instantly populate the database with realistic sample records:
 ```bash
 npm run seed
 ```
 
-### 5. Start the Server
-For standard run:
+### 6. Run the Application
+For standard execution:
 ```bash
 npm start
 ```
-For development with auto-reload:
+For development with hot-reload:
 ```bash
 npm run dev
 ```
 
-Open your browser and visit: **`http://localhost:5000`**
+Visit the application at: `http://localhost:5000`
 
 ---
 
-## Deployment to Netlify
+## Cloud Deployment (Netlify + MongoDB Atlas)
 
-This project is configured out-of-the-box for Netlify using `netlify.toml` and Netlify Serverless Functions.
+The project includes built-in compatibility for Netlify via [netlify.toml](netlify.toml) and serverless function handlers:
 
-### Step 1: Push to GitHub
-1. Initialize git and commit:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Student Management System"
-   ```
-2. Create a new repository on [GitHub](https://github.com/new).
-3. Push your repository:
-   ```bash
-   git remote add origin https://github.com/<your-username>/<repo-name>.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-### Step 2: Deploy on Netlify
-1. Log in to [Netlify](https://app.netlify.com).
-2. Click **"Add new site"** &rarr; **"Import an existing project"**.
-3. Select **GitHub** and choose your repository.
-4. Netlify will automatically detect `netlify.toml` with:
-   - **Publish directory**: `public`
-   - **Functions directory**: `netlify/functions`
-5. Under **Environment variables**, click **Add a variable**:
-   - **Key**: `MONGODB_URI`
-   - **Value**: Your MongoDB Atlas connection URI (e.g. `mongodb+srv://user:pass@cluster0.xxxx.mongodb.net/student_db?retryWrites=true&w=majority`)
-   > **Note on MongoDB Atlas**: Ensure your Atlas cluster has Network Access configured to **Allow access from anywhere (`0.0.0.0/0`)** so Netlify serverless functions can connect.
-6. Click **Deploy site**.
-7. Once deployed, Netlify will provide your live URL (e.g., `https://your-site-name.netlify.app`).
+1. **Repository Setup**: Push repository to GitHub.
+2. **Netlify Project Creation**: Link GitHub repo to a new Netlify site.
+3. **Build Settings**: Automatically configured by `netlify.toml`:
+   - Publish directory: `public`
+   - Functions directory: `netlify/functions`
+4. **Environment Variables**:
+   - Add `MONGODB_URI` with the MongoDB Atlas connection string under Netlify **Site configuration &rarr; Environment variables**.
+5. **MongoDB Network Whitelist**:
+   - In MongoDB Atlas, verify **Network Access** allows `0.0.0.0/0` (Access from Anywhere) so Netlify serverless functions can establish connections.
 
 ---
 
-## License
-This project is submitted for academic assessment under the Full Stack Technologies curriculum.
+## Verification & Output
+
+| Feature | Verified Behavior |
+|---|---|
+| **Database Connectivity** | Live connection to MongoDB Atlas with connection status indicator |
+| **Data Creation** | Modal form validation, duplicate roll-number prevention, immediate table refresh |
+| **Data Retrieval** | Instant table population, search debouncing, multi-criteria filtering |
+| **Data Modification** | In-place pre-populated modal, immediate persistence |
+| **Data Removal** | Safe deletion workflow with user confirmation and auto-dismissing toast notifications |
+| **Responsive Design** | Desktop, tablet, and mobile viewport compatibility |
+
+---
+
+## Assessment Compliance Checklist
+
+- [x] Full Stack Architecture (Frontend + Backend + Database)
+- [x] Frontend: Semantic HTML5, CSS3, Vanilla JavaScript (Fetch API)
+- [x] Backend: Node.js + Express.js REST API
+- [x] Database: MongoDB Atlas with Mongoose ODM
+- [x] CRUD Operations: Create, Read, Update, Delete completely functional
+- [x] Version Control: Managed via Git with repository hosted on GitHub
+- [x] Deployment: Configured for Netlify Serverless Cloud hosting
+- [x] Submission Deliverables: Source code, documentation, API specs, and clean commit history
