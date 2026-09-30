@@ -3,6 +3,7 @@
 > **Portfolio-Driven Assessment &bull; Full Stack Technologies (FST)**  
 > **Course Assessment:** Mini Full Stack Web Application  
 > **Submission Date:** October 1, 2026  
+> **Live Demo:** [https://fst-aat-prathamreet-1nh23cs191.netlify.app/](https://fst-aat-prathamreet-1nh23cs191.netlify.app/)  
 > **Repository:** [https://github.com/prathamreet/fst-aat](https://github.com/prathamreet/fst-aat)
 
 ---
@@ -187,6 +188,9 @@ Visit the application at: `http://localhost:5000`
 ---
 
 ## Cloud Deployment (Netlify + MongoDB Atlas)
+
+- **Live Production URL:** [https://fst-aat-prathamreet-1nh23cs191.netlify.app/](https://fst-aat-prathamreet-1nh23cs191.netlify.app/)
+- **Repository:** [https://github.com/prathamreet/fst-aat](https://github.com/prathamreet/fst-aat)
 
 The project includes built-in compatibility for Netlify via [netlify.toml](netlify.toml) and serverless function handlers:
 
