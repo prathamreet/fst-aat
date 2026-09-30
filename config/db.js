@@ -1,4 +1,12 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Configure fallback DNS servers to resolve MongoDB SRV records reliably on Windows/ISPs
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (e) {
+  // Ignore if not supported in certain restricted environments
+}
 
 let isConnected = false;
 
