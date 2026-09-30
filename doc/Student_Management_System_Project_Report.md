@@ -66,19 +66,39 @@ The Student Management System operates as an asynchronous, single-page web porta
 
 Administrators can register new students via a modal dialog that validates fields and prevents duplicate roll numbers. The interface allows instant searching across student names, roll numbers, and emails with client-side debouncing, and enables filtering by academic department and enrollment status. Records can be updated or deleted with two-step safety confirmations.
 
-```text
-+-----------------------------+        HTTP REST API (JSON)       +-------------------------------+
-|   Administrator Client UI   | <===============================> | Express.js / Netlify Function |
-|  (HTML5 / Modern CSS / JS)  |                                   |  (Input Validation / Routes)  |
-+-----------------------------+                                   +-------------------------------+
-               |                                                                  |
-               | Dynamic DOM / Modal Events                                       | Mongoose ODM Queries
-               v                                                                  v
-+-----------------------------+                                   +-------------------------------+
-|  Live KPI Counters & Search |                                   |     MongoDB Atlas Cluster     |
-|   Directory & Toast Alerts  |                                   |  (Collections: student_db)    |
-+-----------------------------+                                   +-------------------------------+
+### System Architecture & Data Flow
+
+```mermaid
+graph LR
+    subgraph Client["Client Layer (Browser)"]
+        UI["HTML5 & Modern CSS3"]
+        JS["Vanilla JS (app.js)"]
+        DOM["DOM & Modal Controller"]
+    end
+
+    subgraph Serverless["API & Serverless Layer"]
+        API["Express.js Router"]
+        Func["Netlify Serverless Function"]
+        Val["Input & Duplicate Validation"]
+    end
+
+    subgraph Database["Database Persistence Layer"]
+        ODM["Mongoose ODM Models"]
+        Atlas[("MongoDB Atlas Cloud DB<br/>student_db.students")]
+    end
+
+    Client <== "HTTP/HTTPS REST API (JSON)" ==> Serverless
+    Serverless <== "Connection Pool / Mongoose" ==> Database
 ```
+
+| Layer | Component | Responsibilities & Implementation |
+|---|---|---|
+| **Client Layer (Browser)** | Semantic HTML5, Custom CSS3, Vanilla JS (`app.js`) | User interaction, modal dialogues, input validation, live search debouncing, asynchronous `fetch()` API calls |
+| **Communication Protocol** | HTTP / HTTPS RESTful API | Standardized JSON payloads (`GET`, `POST`, `PUT`, `DELETE`), status codes (`200`, `201`, `400`, `404`, `500`) |
+| **Backend / Serverless Layer** | Node.js, Express.js Router, Netlify Functions (`api.js`) | Endpoint routing, duplicate roll number verification, serverless connection caching, error handling |
+| **Database Persistence Layer** | MongoDB Atlas, Mongoose ODM (`models/Student.js`) | Document persistence, schema validation, unique indexes on `rollNo`, public DNS fallback (`8.8.8.8`) |
+
+---
 
 ### End-to-End CRUD Operations Matrix
 
@@ -262,28 +282,31 @@ module.exports.handler = async (event, context) => {
 ---
 
 ## 7. Output Screenshots
-
-The deployed Student Management System interface encompasses five primary operational views:
-
-- **View 1: Administrative Dashboard & Student Directory**  
-  *Description:* Primary dashboard displaying real-time KPI counter cards (Total Students: 6, Active Enrolled: 4, Departments: 5), responsive directory table with roll number badges, contact details, department pills, and action controls.  
-  *(Placeholder for Screenshot 1: Live Dashboard with populated student records)*
-
+ 
+ The deployed Student Management System interface encompasses five primary operational views. The screenshots below document the live production deployment on Netlify backed by MongoDB Atlas:
+ 
+- **View 1: Administrative Dashboard & Student Directory (Read Operation & KPI Analytics)**  
++ **View 1: Administrative Dashboard & Student Directory (Read Operation & KPI Analytics)**  
+   *Description:* Primary dashboard view showing real-time aggregate KPI metrics (Total Students: 6, Active Enrolled: 4, Departments: 5), the student directory table with roll number badges, contact information, department badges, and action buttons.
+ 
+   ![Administrative Dashboard](screenshot/dash.png)
+   *Figure 1: Production Student Management Dashboard displaying real-time KPI metrics, search filter, and populated student records on Netlify.*
+ 
 - **View 2: Student Enrollment Modal Dialog (Create Operation)**  
-  *Description:* Clean, accessible modal dialog with input validation fields for Student Full Name, Roll Number, Academic Email, Contact Phone, Department selector, Semester selector, and Enrollment status.  
-  *(Placeholder for Screenshot 2: Add Student Modal Form)*
-
++ **View 2: Student Enrollment Modal Dialog (Create Operation)**  
+   *Description:* Interactive modal dialog allowing administrators to register new students with fields for Name, Roll Number, Email Address, Contact Phone, Department, Semester, and Enrollment Status. Built-in client validation enforces required fields and proper data formatting.
+ 
+   ![Student Enrollment Modal](screenshot/form.png)
+   *Figure 2: Student Registration Form Modal displaying field-level validation rules and enrollment input controls.*
+ 
 - **View 3: Dynamic Real-Time Search & Departmental Filter (Read Operation)**  
-  *Description:* Instant debounced query execution searching across student name, roll number, or email, with live record count updating dynamically as filters are applied.  
-  *(Placeholder for Screenshot 3: Filtered Directory View)*
-
+  *Description:* Instant debounced query execution searching across student name, roll number, or email, with live record count updating dynamically as filters are applied across departments (Computer Science, IT, ECE, Mechanical, Civil, Business Administration).
+ 
 - **View 4: Student Record Modification Dialog (Update Operation)**  
-  *Description:* Pre-populated modal dialog allowing administrative staff to modify student department, contact details, or status with instantaneous database synchronization.  
-  *(Placeholder for Screenshot 4: Edit Student Record Modal)*
-
+  *Description:* Pre-populated modal dialog allowing administrative staff to modify student department, contact details, or enrollment status with instantaneous database synchronization upon submission.
+ 
 - **View 5: Safety Confirmation & Toast Feedback (Delete Operation)**  
-  *Description:* Two-step confirmation modal protecting against accidental record loss, accompanied by an animated success toast notification upon successful deletion.  
-  *(Placeholder for Screenshot 5: Delete Confirmation Dialog and Toast Alert)*
+  *Description:* Two-step confirmation modal protecting against accidental record loss, accompanied by an animated success toast notification upon successful deletion from MongoDB Atlas.
 
 ---
 

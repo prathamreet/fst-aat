@@ -1,3 +1,4 @@
+import os
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -9,7 +10,7 @@ def set_cell_background(cell, fill_hex):
     shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
-def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
+def set_cell_margins(cell, top=100, bottom=100, left=140, right=140):
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = OxmlElement('w:tcMar')
     for m, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
@@ -23,8 +24,7 @@ def create_report():
     doc = docx.Document()
     
     # Page setup - 1 inch margins
-    sections = doc.sections
-    for section in sections:
+    for section in doc.sections:
         section.top_margin = Inches(1.0)
         section.bottom_margin = Inches(1.0)
         section.left_margin = Inches(1.0)
@@ -117,6 +117,26 @@ def create_report():
         r.font.color.rgb = RGBColor(30, 41, 59)
         return p
 
+    def add_image_with_caption(image_path, width, caption_text):
+        if os.path.exists(image_path):
+            p_img = doc.add_paragraph()
+            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_img.paragraph_format.space_before = Pt(10)
+            p_img.paragraph_format.space_after = Pt(4)
+            run = p_img.add_run()
+            run.add_picture(image_path, width=width)
+            
+            p_cap = doc.add_paragraph()
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.paragraph_format.space_after = Pt(14)
+            r_cap = p_cap.add_run(caption_text)
+            r_cap.italic = True
+            r_cap.bold = True
+            r_cap.font.size = Pt(9)
+            r_cap.font.color.rgb = RGBColor(71, 85, 105)
+        else:
+            add_body(f"[Image file not found: {image_path}]")
+
     # 1. Project Title
     add_h1("1. Project Title")
     add_body("Student Management System: Mini Full-Stack Academic Record & Enrollment Portal")
@@ -187,17 +207,109 @@ def create_report():
     add_body("The Student Management System operates as an asynchronous, single-page web portal designed for educational administrators. Upon loading, the client establishes an asynchronous handshake with the Express REST API (or Netlify serverless function) to retrieve live aggregate metrics and the student directory.")
     add_body("Administrators can register new students via a modal dialog that validates fields and prevents duplicate roll numbers. The interface allows instant searching across student names, roll numbers, and emails with client-side debouncing, and enables filtering by academic department and enrollment status. Records can be updated or deleted with two-step safety confirmations.")
 
-    add_body("""+-----------------------------+        HTTP REST API (JSON)       +-------------------------------+
-|   Administrator Client UI   | <===============================> | Express.js / Netlify Function |
-|  (HTML5 / Modern CSS / JS)  |                                   |  (Input Validation / Routes)  |
-+-----------------------------+                                   +-------------------------------+
-               |                                                                  |
-               | Dynamic DOM / Modal Events                                       | Mongoose ODM Queries
-               v                                                                  v
-+-----------------------------+                                   +-------------------------------+
-|  Live KPI Counters & Search |                                   |     MongoDB Atlas Cluster     |
-|   Directory & Toast Alerts  |                                   |  (Collections: student_db)    |
-+-----------------------------+                                   +-------------------------------+""")
+    # High-Quality Styled Visual Architecture Table Diagram
+    add_h2("System Architecture & Data Flow Diagram")
+    
+    arch_table = doc.add_table(rows=3, cols=3)
+    arch_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    arch_table.style = 'Table Grid'
+    
+    # Column widths: 2.7 in, 1.1 in, 2.7 in
+    col_widths = [Inches(2.7), Inches(1.1), Inches(2.7)]
+
+    # Row 0: Client Layer <---> API Serverless Layer
+    r0 = arch_table.rows[0]
+    for c_i, w in enumerate(col_widths):
+        r0.cells[c_i].width = w
+        set_cell_margins(r0.cells[c_i], 100, 100, 120, 120)
+
+    # Box 1: Client
+    set_cell_background(r0.cells[0], "EFF6FF")
+    p00 = r0.cells[0].paragraphs[0]
+    rn00 = p00.add_run("CLIENT LAYER (BROWSER)\n")
+    rn00.bold = True
+    rn00.font.size = Pt(9.5)
+    rn00.font.color.rgb = RGBColor(30, 58, 138)
+    p00_sub = r0.cells[0].add_paragraph()
+    p00_sub.paragraph_format.line_spacing = 1.1
+    p00_sub.add_run("• Semantic HTML5 & Modern CSS3\n• Vanilla JavaScript (app.js)\n• Asynchronous Fetch API & DOM").font.size = Pt(8.5)
+
+    # Box 2: Middle Protocol Arrow
+    set_cell_background(r0.cells[1], "F8FAFC")
+    p01 = r0.cells[1].paragraphs[0]
+    p01.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p01.paragraph_format.space_before = Pt(8)
+    rn01 = p01.add_run("◄══════►\n")
+    rn01.bold = True
+    rn01.font.size = Pt(10)
+    rn01.font.color.rgb = RGBColor(37, 99, 235)
+    p01_sub = r0.cells[1].add_paragraph()
+    p01_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p01_sub.add_run("HTTP / HTTPS\nREST API\n(JSON Payloads)").font.size = Pt(7.5)
+
+    # Box 3: Serverless Backend
+    set_cell_background(r0.cells[2], "F1F5F9")
+    p02 = r0.cells[2].paragraphs[0]
+    rn02 = p02.add_run("BACKEND / SERVERLESS LAYER\n")
+    rn02.bold = True
+    rn02.font.size = Pt(9.5)
+    rn02.font.color.rgb = RGBColor(15, 23, 42)
+    p02_sub = r0.cells[2].add_paragraph()
+    p02_sub.paragraph_format.line_spacing = 1.1
+    p02_sub.add_run("• Node.js & Express.js Router\n• Netlify Serverless (AWS Lambda)\n• Input Validation & CORS Handler").font.size = Pt(8.5)
+
+    # Row 1: Flow Arrows
+    r1 = arch_table.rows[1]
+    for c_i, w in enumerate(col_widths):
+        r1.cells[c_i].width = w
+        set_cell_margins(r1.cells[c_i], 40, 40, 100, 100)
+
+    p10 = r1.cells[0].paragraphs[0]
+    p10.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r10 = p10.add_run("▼  Dynamic DOM / Modal Events")
+    r10.font.size = Pt(8)
+    r10.font.color.rgb = RGBColor(100, 116, 139)
+
+    p11 = r1.cells[1].paragraphs[0] # empty
+
+    p12 = r1.cells[2].paragraphs[0]
+    p12.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r12 = p12.add_run("▼  Mongoose ODM Connection Pool")
+    r12.font.size = Pt(8)
+    r12.font.color.rgb = RGBColor(100, 116, 139)
+
+    # Row 2: Client Components <---> Database Persistence
+    r2 = arch_table.rows[2]
+    for c_i, w in enumerate(col_widths):
+        r2.cells[c_i].width = w
+        set_cell_margins(r2.cells[c_i], 100, 100, 120, 120)
+
+    # Box 4: Interactive Client Features
+    set_cell_background(r2.cells[0], "F8FAFC")
+    p20 = r2.cells[0].paragraphs[0]
+    rn20 = p20.add_run("INTERACTIVE UI CONTROLS\n")
+    rn20.bold = True
+    rn20.font.size = Pt(9.5)
+    rn20.font.color.rgb = RGBColor(30, 41, 59)
+    p20_sub = r2.cells[0].add_paragraph()
+    p20_sub.paragraph_format.line_spacing = 1.1
+    p20_sub.add_run("• Real-time Debounced Search\n• Department & Status Filters\n• KPI Metric Counters & Toasts").font.size = Pt(8.5)
+
+    # Box 5: Middle blank
+    set_cell_background(r2.cells[1], "FFFFFF")
+
+    # Box 6: Database Persistence Layer
+    set_cell_background(r2.cells[2], "ECFDF5")
+    p22 = r2.cells[2].paragraphs[0]
+    rn22 = p22.add_run("MONGODB ATLAS CLOUD DB\n")
+    rn22.bold = True
+    rn22.font.size = Pt(9.5)
+    rn22.font.color.rgb = RGBColor(6, 95, 70)
+    p22_sub = r2.cells[2].add_paragraph()
+    p22_sub.paragraph_format.line_spacing = 1.1
+    p22_sub.add_run("• Database: student_db (students)\n• Unique Roll Index & Validation\n• Cached Pool & Public DNS Fallback").font.size = Pt(8.5)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
     add_h2("End-to-End CRUD Operations Matrix")
     crud_data = [
@@ -248,7 +360,11 @@ def create_report():
 │   └── db.js                 # MongoDB Atlas connection handler & DNS failover logic
 ├── doc/
 │   ├── teacher-task.md       # Teacher assessment guidelines
-│   └── Academic Project Report Structure Guidelines.docx # Prescribed submission format
+│   ├── screenshot/           # Production application interface screenshots
+│   │   ├── dash.png          # Live dashboard & student directory view
+│   │   └── form.png          # Student registration modal dialog view
+│   ├── Student_Management_System_Project_Report.docx # Formatted academic report
+│   └── Student_Management_System_Project_Report.md   # Markdown project report
 ├── models/
 │   └── Student.js            # Mongoose Data Schema & Model constraints
 ├── netlify/
@@ -383,26 +499,24 @@ module.exports.handler = async (event, context) => {
 
     # 7. Output Screenshots
     add_h1("7. Output Screenshots")
-    add_body("The deployed Student Management System interface encompasses five primary operational views:")
-    add_body("View 1: Administrative Dashboard & Student Directory")
-    add_body("Description: Primary dashboard displaying real-time KPI counter cards (Total Students: 6, Active Enrolled: 4, Departments: 5), responsive directory table with roll number badges, contact details, department pills, and action controls.")
-    add_body("[ Screenshot 1 Placeholder: Live Dashboard with populated student records ]\n")
+    add_body("The deployed Student Management System interface encompasses five primary operational views. The figures below document the production deployment on Netlify backed by MongoDB Atlas:")
 
-    add_body("View 2: Student Enrollment Modal Dialog (Create Operation)")
-    add_body("Description: Clean, accessible modal dialog with input validation fields for Student Full Name, Roll Number, Academic Email, Contact Phone, Department selector, Semester selector, and Enrollment status.")
-    add_body("[ Screenshot 2 Placeholder: Add Student Modal Form ]\n")
+    add_h2("View 1: Administrative Dashboard & Student Directory (Read Operation & KPI Analytics)")
+    add_body("Description: Primary dashboard view showing real-time aggregate KPI metrics (Total Students: 6, Active Enrolled: 4, Departments: 5), the student directory table with roll number badges, contact information, department badges, and action buttons.")
+    add_image_with_caption('doc/screenshot/dash.png', Inches(6.2), "Figure 1: Production Student Management Dashboard displaying real-time KPI metrics, search filter, and populated student records on Netlify.")
 
-    add_body("View 3: Dynamic Real-Time Search & Departmental Filter (Read Operation)")
-    add_body("Description: Instant debounced query execution searching across student name, roll number, or email, with live record count updating dynamically as filters are applied.")
-    add_body("[ Screenshot 3 Placeholder: Filtered Directory View ]\n")
+    add_h2("View 2: Student Enrollment Modal Dialog (Create Operation)")
+    add_body("Description: Interactive modal dialog allowing administrators to register new students with fields for Name, Roll Number, Email Address, Contact Phone, Department, Semester, and Enrollment Status. Built-in client validation enforces required fields and proper data formatting.")
+    add_image_with_caption('doc/screenshot/form.png', Inches(4.8), "Figure 2: Student Registration Form Modal displaying field-level validation rules and enrollment input controls.")
 
-    add_body("View 4: Student Record Modification Dialog (Update Operation)")
-    add_body("Description: Pre-populated modal dialog allowing administrative staff to modify student department, contact details, or status with instantaneous database synchronization.")
-    add_body("[ Screenshot 4 Placeholder: Edit Student Record Modal ]\n")
+    add_h2("View 3: Dynamic Real-Time Search & Departmental Filter (Read Operation)")
+    add_body("Description: Instant debounced query execution searching across student name, roll number, or email, with live record count updating dynamically as filters are applied across departments (Computer Science, IT, ECE, Mechanical, Civil, Business Administration).")
 
-    add_body("View 5: Safety Confirmation & Toast Feedback (Delete Operation)")
-    add_body("Description: Two-step confirmation modal protecting against accidental record loss, accompanied by an animated success toast notification upon successful deletion.")
-    add_body("[ Screenshot 5 Placeholder: Delete Confirmation Dialog and Toast Alert ]\n")
+    add_h2("View 4: Student Record Modification Dialog (Update Operation)")
+    add_body("Description: Pre-populated modal dialog allowing administrative staff to modify student department, contact details, or enrollment status with instantaneous database synchronization upon submission.")
+
+    add_h2("View 5: Safety Confirmation & Toast Feedback (Delete Operation)")
+    add_body("Description: Two-step confirmation modal protecting against accidental record loss, accompanied by an animated success toast notification upon successful deletion from MongoDB Atlas.")
 
     # 8. GitHub Repository Screenshot and Link
     add_h1("8. GitHub Repository Screenshot and Link")
@@ -410,11 +524,11 @@ module.exports.handler = async (event, context) => {
     add_body("• GitHub Repository URL: https://github.com/prathamreet/fst-aat")
     add_body("• Production Deployment URL: https://fst-aat-prathamreet-1nh23cs191.netlify.app/")
     add_h2("Repository Commit History")
-    add_code("""301ec47  docs: add live Netlify deployment link to README
+    add_code("""1eebe2e  docs: add official academic project report in Word (.docx) and Markdown (.md) formats
+301ec47  docs: add live Netlify deployment link to README
 2de1649  docs: update README with comprehensive academic documentation aligned with assessment criteria
 7cde5cf  Configure reliable DNS resolution for MongoDB Atlas SRV lookup
 0e4eb8a  Complete Student Management System for FST Mini Project""")
-    add_body("[ Screenshot 6 Placeholder: GitHub Repository Overview and Commit Graph ]")
 
     # 9. Challenges Faced
     add_h1("9. Challenges Faced")
@@ -441,8 +555,13 @@ module.exports.handler = async (event, context) => {
     add_h2("Conclusion")
     add_body("The Student Management System successfully fulfills all requirements stipulated in the Portfolio-Driven Assessment for Full Stack Technologies. By implementing complete end-to-end CRUD operations, robust database connectivity, responsive UI design, and cloud serverless deployment, the project delivers a reliable, production-ready educational management solution.")
 
-    doc.save("doc/Student_Management_System_Project_Report.docx")
-    print("Report generated successfully: doc/Student_Management_System_Project_Report.docx")
+    try:
+        doc.save("doc/Student_Management_System_Project_Report.docx")
+        print("Report generated successfully: doc/Student_Management_System_Project_Report.docx")
+    except PermissionError:
+        fallback_path = "doc/Student_Management_System_Project_Report_Updated.docx"
+        doc.save(fallback_path)
+        print(f"File is open in Microsoft Word. Saved updated report to: {fallback_path}")
 
 if __name__ == '__main__':
     create_report()

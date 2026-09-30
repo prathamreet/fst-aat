@@ -13,6 +13,7 @@ yarn-error.log*
 # Netlify build artifacts
 .netlify/
 
-# OS specific
+# OS specific & Office lock files
 .DS_Store
 Thumbs.db
+~$*.docx

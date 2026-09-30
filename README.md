@@ -206,7 +206,13 @@ The project includes built-in compatibility for Netlify via [netlify.toml](netli
 
 ---
 
-## Verification & Output
+## Verification & Output Screenshots
+
+### Live Production Dashboard
+![Live Production Dashboard](doc/screenshot/dash.png)
+
+### Student Enrollment & Validation Modal
+![Student Enrollment Form Modal](doc/screenshot/form.png)
 
 | Feature | Verified Behavior |
 |---|---|
